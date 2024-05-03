@@ -105,7 +105,7 @@ export const create = (
         }
         return configString;
       };
-      console.log(getSource());
+
       this.emitFile({
         type: "asset",
         fileName: config.fileName,
