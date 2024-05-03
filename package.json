@@ -1,5 +1,5 @@
 {
-  "name": "@openreply/web-docker-vite-plugin",
+  "name": "@openreplyde/web-docker-vite-plugin",
   "version": "2.0.0",
   "type": "module",
   "main": "lib/plugin.js",
