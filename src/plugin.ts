@@ -27,10 +27,8 @@ export const create = (
   config: {
     fileName: string;
     basePath: string;
-    entry: string;
   } & ModuleConfig
 ): Plugin => {
-  let entryFile: string;
   if (!config.basePath)
     throw new Error(
       "web docker: basePath is required. This prepends the script and css paths in remote config files."
@@ -52,12 +50,6 @@ export const create = (
 
   return {
     name: "ViteWebDockerRemoteFile",
-    buildStart() {
-      entryFile = this.emitFile({
-        type: "chunk",
-        id: config.entry,
-      });
-    },
     generateBundle(_, bundle) {
       const css: Array<string> = [];
       const js: Array<string> = [];
@@ -84,9 +76,6 @@ export const create = (
           : "";
 
       const jsString = () => {
-        if (entryFile) {
-          js.push(this.getFileName(entryFile));
-        }
         return js
           .map((file) => getJsAsset(config.basePath.concat(file)))
           .join(",");

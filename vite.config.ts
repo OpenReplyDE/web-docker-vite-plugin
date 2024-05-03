@@ -2,7 +2,6 @@ import vue from "@vitejs/plugin-vue";
 import { defineConfig, loadEnv } from "vite";
 
 import { create } from "./src/plugin";
-import * as path from "path";
 
 /** @type {import('vite').UserConfig} */
 export default defineConfig(({ mode }) => {
@@ -13,7 +12,6 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue(),
       create({
-        entry: path.resolve(__dirname, "./src/test-main.ts"),
         selector: "observed-module",
         basePath: base,
         fileName: "remote-config-test-observed-module.json",
@@ -22,7 +20,6 @@ export default defineConfig(({ mode }) => {
       }),
       create(
         {
-          entry: path.resolve(__dirname, "./src/test-main.ts"),
           basePath: base,
           pages: [".*"],
           fileName: "remote-config-test-page-module.json",
@@ -35,6 +32,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
+            "test-main": ["./src/test-main"],
             "test-file": ["./src/test-file"],
             "test-file-second": ["./src/test-file-2"],
           },
