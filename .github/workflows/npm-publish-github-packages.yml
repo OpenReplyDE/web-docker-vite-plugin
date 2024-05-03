@@ -18,7 +18,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: build-artifacts
-          path: dist
+          path: lib
 
 
   publish-gpr:
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: build-artifacts
-          path: dist
+          path: lib
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
