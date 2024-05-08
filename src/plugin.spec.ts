@@ -8,12 +8,12 @@ describe("plugin", function () {
       selector: "some-element",
     };
 
-    const plugin = create({basePath: "/", fileName: "filename", entry: './test', ...config});
+    const plugin = create({ basePath: "/", fileName: "filename", ...config });
 
     expect(plugin.name).toEqual("ViteWebDockerRemoteFile");
   });
 
-  it("generates remote config of event module type", function () {
+  it("generates remote config of observed module type", function () {
     expect.assertions(2);
 
     const config: ObservedModuleConfig = {
@@ -22,7 +22,11 @@ describe("plugin", function () {
       selector: "some-element",
     };
 
-    const plugin = create({basePath: "/", fileName: "filename", entry: './test', ...config}) as {
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      ...config,
+    }) as {
       name: string;
       generateBundle: (plugin: any, {}, {}) => void;
       emitFile: (arg0: {
@@ -55,7 +59,11 @@ describe("plugin", function () {
       pages: ["select", "/heyobi/.*"],
     };
 
-    const plugin = create({basePath: "/", fileName: "filename", entry: './test', ...config}) as {
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      ...config,
+    }) as {
       name: string;
       generateBundle: (plugin: any, {}, {}) => void;
       emitFile: (arg0: {
@@ -86,7 +94,11 @@ describe("plugin", function () {
       pages: [],
     };
 
-    const plugin = create({basePath: "/", fileName: "filename", entry: './test', ...config}) as {
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      ...config,
+    }) as {
       name: string;
       generateBundle: ({}, {}) => void;
       emitFile: (arg0: {
@@ -101,7 +113,7 @@ describe("plugin", function () {
     plugin.generateBundle(
       {},
       {
-        "source": {
+        source: {
           type: "chunk",
           fileName: "filename.js",
         },
@@ -125,7 +137,11 @@ describe("plugin", function () {
       pages: [],
     };
 
-    const plugin = create({basePath: "/", fileName: "filename", entry: './test', ...config}) as {
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      ...config,
+    }) as {
       name: string;
       generateBundle: ({}, {}) => void;
       emitFile: (arg0: {
@@ -164,7 +180,11 @@ describe("plugin", function () {
       pages: [],
     };
 
-    const plugin = create({basePath: "/", fileName: "filename", entry: './test', ...config}) as {
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      ...config,
+    }) as {
       name: string;
       generateBundle: ({}, {}) => void;
       emitFile: (arg0: {
@@ -194,6 +214,45 @@ describe("plugin", function () {
       fileName: "filename",
       source:
         '{"version":"1.0.0","type":"page","assets":[{"type":"js","buildType":"modern","src":"/js-file.js"},{"type":"css","src":"/css-file.css"}],"module":"some-element","pages":[]}',
+      type: "asset",
+    });
+  });
+  it("generates remote config of page module type as shared module", function () {
+    expect.assertions(2);
+
+    const config: PageModuleConfig = {
+      pages: [],
+      type: "page",
+      module: "some-element",
+      share: {
+        name: "vue",
+      },
+    };
+
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      ...config,
+    }) as {
+      name: string;
+      generateBundle: (plugin: any, {}, {}) => void;
+      emitFile: (arg0: {
+        fileName: string;
+        source: string;
+        type: string;
+      }) => void;
+    };
+
+    plugin.emitFile = vi.fn();
+
+    expect(plugin.name).toEqual("ViteWebDockerRemoteFile");
+
+    plugin.generateBundle(plugin, {}, {});
+
+    expect(plugin.emitFile).toHaveBeenCalledWith({
+      fileName: "filename",
+      source:
+        '{"version":"1.0.0","type":"page","assets":[],"module":"some-element","pages":[],"share":{"name":"vue"}}',
       type: "asset",
     });
   });

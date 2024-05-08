@@ -20,6 +20,9 @@ export interface PageInclude {
 export interface PageModuleConfig extends ModuleConfigBase {
   type: "page";
   pages: (string | PageInclude)[];
+  share?: {
+    name: string;
+  };
 }
 
 type ModuleConfig = ObservedModuleConfig | PageModuleConfig;
@@ -87,10 +90,16 @@ export const create = (
 
         if (config.type === "observed") {
           configString += `"selector":"${config.selector}"}`;
-        } else if (config.type === "page" && config.pages) {
-          configString += `"pages":[${config.pages
-            .map((p) => `"${p}"`)
-            .join(",")}]}`;
+        } else if (config.type === "page") {
+          if (config.pages) {
+            configString += `"pages":[${config.pages
+              .map((p) => `"${p}"`)
+              .join(",")}]`;
+          }
+          if (config.share) {
+            configString += `,"share":{"name":"${config.share.name}"}`;
+          }
+          configString += "}";
         }
         return configString;
       };
