@@ -34,8 +34,20 @@ export default defineConfig(({ mode }) => {
           fileName: "remote-config-test-page-module-shared.json",
           module: "page-share-module",
           type: "page",
-          share: {
-            name: "vue"
+          use: {
+            vue: "vue-module"
+          }
+        }
+      ),
+      create(
+        {
+          basePath: base,
+          pages: [".*"],
+          fileName: "remote-config-test-page-module-global.json",
+          module: "page-global-module",
+          type: "page",
+          exposes: {
+            vue: "vue-module"
           }
         }
       ),

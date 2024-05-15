@@ -224,14 +224,14 @@ describe("plugin", function () {
       pages: [],
       type: "page",
       module: "some-element",
-      share: {
-        name: "vue",
-      },
     };
 
     const plugin = create({
       basePath: "/",
       fileName: "filename",
+      use: {
+        vue: "vue-module",
+      },
       ...config,
     }) as {
       name: string;
@@ -252,7 +252,7 @@ describe("plugin", function () {
     expect(plugin.emitFile).toHaveBeenCalledWith({
       fileName: "filename",
       source:
-        '{"version":"1.0.0","type":"page","assets":[],"module":"some-element","pages":[],"share":{"name":"vue"}}',
+        '{"version":"1.0.0","type":"page","assets":[],"module":"some-element","pages":[]}',
       type: "asset",
     });
   });

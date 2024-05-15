@@ -17,5 +17,5 @@
     "skipLibCheck": true,
     "outDir": "./lib"
   },
-  "include": ["src/plugin.ts"]
+  "include": ["src/plugin.ts", "src/transpile.ts"]
 }
