@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
           basePath: base,
           pages: [".*"],
           fileName: "remote-config-test-page-module-global.json",
-          module: "page-global-module",
+          module: "vue-page-global-module",
           type: "page",
           exposes: {
             vue: "vue-module"
