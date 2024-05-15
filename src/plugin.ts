@@ -1,5 +1,5 @@
 import type { Plugin } from "vite";
-import { importToContainer, importToWindow } from "./transpile";
+import { importToContainer, importToWindow } from "./transpile.js";
 
 export type IncludeType = "observed" | "page";
 export interface ModuleConfigBase {
