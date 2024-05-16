@@ -35,25 +35,25 @@ export const create = (
     use?: {
       [key: string]: string;
     };
-  } & ModuleConfig,
+  } & ModuleConfig
 ): Plugin => {
   if (!config.basePath)
     throw new Error(
-      "web docker: basePath is required. This prepends the script and css paths in remote config files.",
+      "web docker: basePath is required. This prepends the script and css paths in remote config files."
     );
   if (!config.module)
     throw new Error(
-      "web docker: fileName is required. This is the name of the remote config file.",
+      "web docker: fileName is required. This is the name of the remote config file."
     );
 
   if (!config.fileName)
     throw new Error(
-      "web docker: fileName is required. This is the name of the remote config file.",
+      "web docker: fileName is required. This is the name of the remote config file."
     );
 
   if (!config.type)
     throw new Error(
-      "web docker: type is required. This is the type of the remote config file.",
+      "web docker: type is required. This is the type of the remote config file."
     );
 
   const scope = config.scope || "webdocker";
@@ -120,6 +120,10 @@ export const create = (
             configString += `"pages":[${config.pages
               .map((p) => `"${p}"`)
               .join(",")}]`;
+            if (config.exposes)
+              configString += `,"exposes":${JSON.stringify(config.exposes)}`;
+            if (config.use)
+              configString += `,"use":${JSON.stringify(config.use)}`;
           }
           configString += "}";
         }
