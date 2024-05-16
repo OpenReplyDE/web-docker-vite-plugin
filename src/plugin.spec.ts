@@ -252,7 +252,7 @@ describe("plugin", function () {
     expect(plugin.emitFile).toHaveBeenCalledWith({
       fileName: "filename",
       source:
-        '{"version":"1.0.0","type":"page","assets":[],"module":"some-element","pages":[]}',
+        '{"version":"1.0.0","type":"page","assets":[],"module":"some-element","pages":[],"use":{"vue":"vue-module"}}',
       type: "asset",
     });
   });
