@@ -27,30 +27,6 @@ export default defineConfig(({ mode }) => {
           type: "page",
         }
       ),
-      create(
-        {
-          basePath: base,
-          pages: [".*"],
-          fileName: "remote-config-test-page-module-shared.json",
-          module: "page-share-module",
-          type: "page",
-          use: {
-            vue: "vue-module"
-          }
-        }
-      ),
-      create(
-        {
-          basePath: base,
-          pages: [".*"],
-          fileName: "remote-config-test-page-module-global.json",
-          module: "vue-page-global-module",
-          type: "page",
-          exposes: {
-            vue: "vue-module"
-          }
-        }
-      ),
     ],
     build: {
       rollupOptions: {

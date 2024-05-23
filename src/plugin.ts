@@ -1,5 +1,5 @@
 import type { Plugin } from "vite";
-import { importToContainer, importToWindow } from "./transpile.js";
+import { importToContainer, importFromContainer } from "./transpile.js";
 
 export type IncludeType = "observed" | "page";
 export interface ModuleConfigBase {
@@ -24,19 +24,19 @@ export interface PageModuleConfig extends ModuleConfigBase {
 }
 
 type ModuleConfig = ObservedModuleConfig | PageModuleConfig;
-export const create = (
-  config: {
-    fileName: string;
-    basePath: string;
-    scope?: string;
-    exposes?: {
-      [key: string]: string;
-    };
-    use?: {
-      [key: string]: string;
-    };
-  } & ModuleConfig
-): Plugin => {
+
+type PluginConfig = {
+  fileName: string;
+  basePath: string;
+  scope?: string;
+  exposes?: {
+    [key: string]: string;
+  };
+  use?: {
+    [key: string]: string;
+  };
+};
+export const create = (config: PluginConfig & ModuleConfig): Plugin => {
   if (!config.basePath)
     throw new Error(
       "web docker: basePath is required. This prepends the script and css paths in remote config files."
@@ -58,21 +58,41 @@ export const create = (
 
   const scope = config.scope || "webdocker";
 
+  const validate = (config: any) => {
+    for (const key in config.exposes) {
+      if (config.use && config.use[key])
+        throw new Error(
+          `web docker: ${key} is both exposed and used in the same module.`
+        );
+      for (const key2 in config.exposes) {
+        if (key !== key2 && config.exposes[key] === config.exposes[key2])
+          throw new Error(
+            `web docker: ${key} and ${key2} are both exposed as ${config.exposes[key]}`
+          );
+      }
+    }
+  };
+
   return {
     name: "ViteWebDockerRemoteFile",
     generateBundle(_, bundle) {
+      // todo check that the value of keys in config.exposes and config.use are unique
+      validate(config);
+
       const expose = (chunk: any) => {
         for (const key in config.exposes) {
-          // TODO: using filename here might be wrong in case of chunk splitting
-          if (chunk.fileName.includes(key)) {
-            chunk.code = importToContainer(scope, config.module, chunk.code);
-          }
+          chunk.code = importToContainer(scope, config.module, chunk.code, key);
         }
       };
 
       const use = (chunk: any) => {
         for (const key in config.use) {
-          chunk.code = importToWindow(scope, config.use[key], chunk.code, key);
+          chunk.code = importFromContainer(
+            scope,
+            config.use[key],
+            chunk.code,
+            key
+          );
         }
       };
 
