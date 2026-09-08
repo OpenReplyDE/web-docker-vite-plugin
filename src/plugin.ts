@@ -75,6 +75,19 @@ export const create = (config: PluginConfig & ModuleConfig): Plugin => {
 
   return {
     name: "ViteWebDockerRemoteFile",
+    config() {
+      const external = Object.keys(config.use ?? {});
+      if (!external.length) {
+        return;
+      }
+      return {
+        build: {
+          rollupOptions: {
+            external,
+          },
+        },
+      };
+    },
     generateBundle(_, bundle) {
       // todo check that the value of keys in config.exposes and config.use are unique
       validate(config);
