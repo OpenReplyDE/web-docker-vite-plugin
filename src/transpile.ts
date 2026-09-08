@@ -4,19 +4,16 @@ const importFromContainer = (
   code: string,
   key: string
 ) => {
-  const removedEnter = code.replace(/\n/g, "");
-  const removedExtraSpaces = removedEnter.replace(/\s+/g, " ");
-
   const importRegex = new RegExp(
-    String.raw`import\s?{(.*?)}\s?from\s?"${key}"`,
+    String.raw`import\s*{([\s\S]*?)}\s*from\s*"${key}"`,
     "g"
   );
   const defaultRegex = new RegExp(
-    String.raw`import\s?(.*?)\s?from\s?"${key}"`,
+    String.raw`import\s*([\s\S]*?)\s*from\s*"${key}"`,
     "g"
   );
 
-  const toWindowObject = removedExtraSpaces
+  const toWindowObject = code
     .replace(
       importRegex,
       `const {$1} = window["${scope}"]["${module}"]["${key}"]`
@@ -27,7 +24,7 @@ const importFromContainer = (
     );
 
   const windowRegex = new RegExp(
-    String.raw`const {(.*?)} = window\["${scope}"\]\["${module}"\]\["${key}"\];`
+    String.raw`const {([\s\S]*?)} = window\["${scope}"\]\["${module}"\]\["${key}"\];`
   );
   const match = toWindowObject.match(windowRegex);
 
@@ -67,15 +64,26 @@ const importToContainer = (
 
     if (aliasMatch) {
       const object = aliasMatch[1].replace(/\s+/g, "");
-      return code.concat(` window["${scope}"]["${module}"]={${key}:${object}};`);
+      return code.concat(
+        ` window["${scope}"]["${module}"] = Object.assign(window["${scope}"]["${module}"] || {}, { ${key}: ${object} });`
+      );
     }
   }
 
   const exportMatch = removedExtraSpaces.match(/export { (.*?) };/);
 
   if (exportMatch) {
+    const exportedNames = exportMatch[1]
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s);
+
+    if (!exportedNames.includes(key)) {
+      return code;
+    }
+
     return code.concat(
-      ` window["${scope}"]["${module}"] = { ${exportMatch[1]} };`
+      ` window["${scope}"]["${module}"] = Object.assign(window["${scope}"]["${module}"] || {}, { ${key}: ${key} });`
     );
   }
 

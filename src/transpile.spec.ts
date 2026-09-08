@@ -69,7 +69,7 @@ describe("transpile", () => {
       const result = importToContainer(scope, module, code, "method");
 
       expect(result).toEqual(
-        `export { method }; window["scope"]["module"] = { method };`,
+        `export { method }; window["scope"]["module"] = Object.assign(window["scope"]["module"] || {}, { method: method });`,
       );
     });
     it("imports aliased module to container", () => {
@@ -78,7 +78,7 @@ describe("transpile", () => {
       const result = importToContainer(scope, module, code, "object");
 
       expect(result).toEqual(
-        `export { oa as object }; window["scope"]["module"]={object:oa};`,
+        `export { oa as object }; window["scope"]["module"] = Object.assign(window["scope"]["module"] || {}, { object: oa });`,
       );
     });
     it("imports indented aliased module to container", () => {
@@ -90,8 +90,42 @@ describe("transpile", () => {
       const result = importToContainer(scope, module, code, "object");
 
       expect(result).toEqual(
-        `${code} window["scope"]["module"]={object:oa};`,
+        `${code} window["scope"]["module"] = Object.assign(window["scope"]["module"] || {}, { object: oa });`,
       );
+    });
+
+    it("keeps both keys when called twice with different keys against the same code and module", () => {
+      const code = `export { method, method2 };`;
+
+      const result = importToContainer(scope, module, code, "method");
+      const result2 = importToContainer(scope, module, result, "method2");
+
+      expect(result2).toContain(
+        `window["scope"]["module"] = Object.assign(window["scope"]["module"] || {}, { method: method });`,
+      );
+      expect(result2).toContain(
+        `window["scope"]["module"] = Object.assign(window["scope"]["module"] || {}, { method2: method2 });`,
+      );
+    });
+
+    it("only includes the requested key from a multi-identifier export list", () => {
+      const code = `export { method, method2, method3 };`;
+
+      const result = importToContainer(scope, module, code, "method2");
+
+      expect(result).toEqual(
+        `export { method, method2, method3 }; window["scope"]["module"] = Object.assign(window["scope"]["module"] || {}, { method2: method2 });`,
+      );
+      expect(result).not.toContain("method:");
+      expect(result).not.toContain("method3:");
+    });
+
+    it("leaves code unchanged when the key is absent from the export list", () => {
+      const code = `export { method, method2, method3 };`;
+
+      const result = importToContainer(scope, module, code, "notThere");
+
+      expect(result).toEqual(code);
     });
   });
   it("imports multiple modules to container", () => {
@@ -104,7 +138,18 @@ describe("transpile", () => {
     const result2 = importToContainer(scope, "module2", result, "method2");
 
     expect(result2).toEqual(
-      `${code} window["scope"]["module"]={method:ka}; window["scope"]["module2"]={method2:Ma};`,
+      `${code} window["scope"]["module"] = Object.assign(window["scope"]["module"] || {}, { method: ka }); window["scope"]["module2"] = Object.assign(window["scope"]["module2"] || {}, { method2: Ma });`,
+    );
+  });
+
+  it("preserves newlines when rewriting a multi-line import to the window lookup", () => {
+    const code = `import {\n  method,\n  method2\n} from "example";\n\nconsole.log(method);`;
+
+    const result = importFromContainer(scope, module, code, "example");
+
+    expect(result).toContain("\n");
+    expect(result).toContain(
+      `const {\n  method,\n  method2\n} = window["scope"]["module"]["example"]`,
     );
   });
 });
