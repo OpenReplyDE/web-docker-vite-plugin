@@ -256,4 +256,43 @@ describe("plugin", function () {
       type: "asset",
     });
   });
+
+  it("marks used modules as external in build.rollupOptions.external", function () {
+    const config: PageModuleConfig = {
+      pages: [],
+      type: "page",
+      module: "some-element",
+    };
+
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      use: {
+        vue: "shared-vue-3-5-17",
+      },
+      ...config,
+    }) as { config: () => any };
+
+    const result = plugin.config();
+
+    expect(result.build.rollupOptions.external).toContain("vue");
+  });
+
+  it("returns nothing from the config hook when no use is configured", function () {
+    const config: PageModuleConfig = {
+      pages: [],
+      type: "page",
+      module: "some-element",
+    };
+
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      ...config,
+    }) as { config: () => any };
+
+    const result = plugin.config();
+
+    expect(result).toBeUndefined();
+  });
 });
