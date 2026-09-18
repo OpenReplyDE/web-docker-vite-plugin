@@ -257,6 +257,86 @@ describe("plugin", function () {
     });
   });
 
+  it("rewrites every used module in a chunk without corrupting earlier rewrites", function () {
+    expect.assertions(1);
+
+    const config: PageModuleConfig = {
+      pages: [],
+      type: "page",
+      module: "some-element",
+    };
+
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      use: {
+        vue: "vue-module",
+        primevue: "primevue-module",
+        lodash: "lodash-module",
+      },
+      ...config,
+    }) as {
+      generateBundle: ({}, {}) => void;
+      emitFile: (arg0: {}) => void;
+    };
+
+    plugin.emitFile = vi.fn();
+
+    const chunk = {
+      type: "chunk",
+      fileName: "main.js",
+      code: `import { ref as R, toRaw as U } from "vue";import { Button as B } from "primevue";import { merge as M } from "lodash";`,
+    };
+
+    plugin.generateBundle({}, { main: chunk });
+
+    expect(chunk.code).toEqual(
+      `const { ref: R, toRaw: U } = window["webdocker"]["vue-module"]["vue"];const { Button: B } = window["webdocker"]["primevue-module"]["primevue"];const { merge: M } = window["webdocker"]["lodash-module"]["lodash"];`,
+    );
+  });
+
+  it("exposes every configured key from a chunk while also rewriting used modules", function () {
+    expect.assertions(1);
+
+    const config: PageModuleConfig = {
+      pages: [],
+      type: "page",
+      module: "some-element",
+    };
+
+    const plugin = create({
+      basePath: "/",
+      fileName: "filename",
+      use: {
+        vue: "vue-module",
+      },
+      exposes: {
+        alpha: "alpha",
+        beta: "beta",
+      },
+      ...config,
+    }) as {
+      generateBundle: ({}, {}) => void;
+      emitFile: (arg0: {}) => void;
+    };
+
+    plugin.emitFile = vi.fn();
+
+    const chunk = {
+      type: "chunk",
+      fileName: "main.js",
+      code: `import { ref as R } from "vue";const b=2;export { R as alpha };export { b as beta };`,
+    };
+
+    plugin.generateBundle({}, { main: chunk });
+
+    expect(chunk.code).toEqual(
+      `const { ref: R } = window["webdocker"]["vue-module"]["vue"];const b=2;export { R as alpha };export { b as beta };` +
+        ` window["webdocker"]["some-element"] = Object.assign(window["webdocker"]["some-element"] || {}, { alpha: R });` +
+        ` window["webdocker"]["some-element"] = Object.assign(window["webdocker"]["some-element"] || {}, { beta: b });`,
+    );
+  });
+
   it("marks used modules as external in build.rollupOptions.external", function () {
     const config: PageModuleConfig = {
       pages: [],
