@@ -1,6 +1,6 @@
 {
   "name": "@openreplyde/web-docker-vite-plugin",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "main": "dist/plugin.umd.cjs",
   "files": [

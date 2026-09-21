@@ -4,48 +4,46 @@ const importFromContainer = (
   code: string,
   key: string
 ) => {
-  const importRegex = new RegExp(
+  const container = `window["${scope}"]["${module}"]["${key}"]`;
+
+  const namedImportRegex = new RegExp(
     String.raw`import\s*{([\s\S]*?)}\s*from\s*"${key}"`,
     "g"
   );
-  const defaultRegex = new RegExp(
-    String.raw`import\s*([\s\S]*?)\s*from\s*"${key}"`,
+  const namespaceImportRegex = new RegExp(
+    String.raw`import\s*\*\s*as\s+([A-Za-z_$][\w$]*)\s*from\s*"${key}"`,
+    "g"
+  );
+  const defaultImportRegex = new RegExp(
+    String.raw`import\s+([A-Za-z_$][\w$]*)\s*from\s*"${key}"`,
     "g"
   );
 
-  const toWindowObject = code
+  return code
     .replace(
-      importRegex,
-      `const {$1} = window["${scope}"]["${module}"]["${key}"]`
+      namedImportRegex,
+      (_match, names: string) => `const {${toBindings(names)}} = ${container}`
     )
-    .replace(
-      defaultRegex,
-      `const $1 = window["${scope}"]["${module}"]["${key}"]`
-    );
+    .replace(namespaceImportRegex, `const $1 = ${container}`)
+    .replace(defaultImportRegex, `const $1 = ${container}`);
+};
 
-  const windowRegex = new RegExp(
-    String.raw`const {([\s\S]*?)} = window\["${scope}"\]\["${module}"\]\["${key}"\];`
-  );
-  const match = toWindowObject.match(windowRegex);
-
-  if (match && match[1].includes("as")) {
-    const imports = match[1]
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s);
-
-    const assignments = imports
-      .map((i) => {
-        const [original, alias] = i.split(" as ");
-        return `${original}: ${alias || original}`;
-      })
-      .join(", ");
-    return toWindowObject.replace(
-      windowRegex,
-      `const { ${assignments} } = window["${scope}"]["${module}"]["${key}"];`
-    );
+const toBindings = (names: string) => {
+  if (!names.includes(" as ")) {
+    return names;
   }
-  return toWindowObject;
+
+  const bindings = names
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name)
+    .map((name) => {
+      const [original, alias] = name.split(" as ");
+      return `${original.trim()}: ${(alias || original).trim()}`;
+    })
+    .join(", ");
+
+  return ` ${bindings} `;
 };
 
 const importToContainer = (
@@ -57,37 +55,48 @@ const importToContainer = (
   const removedEnter = code.replace(/\n/g, "");
   const removedExtraSpaces = removedEnter.replace(/\s+/g, " ");
 
-  const aliases = removedExtraSpaces.match(/export\s*{([^}]*)};/);
+  const local = localNameOf(removedExtraSpaces, key);
 
-  if (aliases) {
-    const aliasMatch = aliases[1].match(String.raw`(\w+)\s+as\s+${key}`);
-
-    if (aliasMatch) {
-      const object = aliasMatch[1].replace(/\s+/g, "");
-      return code.concat(
-        ` window["${scope}"]["${module}"] = Object.assign(window["${scope}"]["${module}"] || {}, { ${key}: ${object} });`
-      );
-    }
+  if (!local) {
+    return code;
   }
 
-  const exportMatch = removedExtraSpaces.match(/export { (.*?) };/);
+  return code.concat(
+    ` window["${scope}"]["${module}"] = Object.assign(window["${scope}"]["${module}"] || {}, { ${key}: ${local} });`
+  );
+};
 
-  if (exportMatch) {
-    const exportedNames = exportMatch[1]
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s);
+const localNameOf = (code: string, key: string) => {
+  const exportRegex = /export\s*{([^}]*)};/g;
 
-    if (!exportedNames.includes(key)) {
-      return code;
+  let statement = exportRegex.exec(code);
+
+  while (statement) {
+    const exported = exportedNameOf(statement[1], key);
+
+    if (exported) {
+      return exported;
     }
 
-    return code.concat(
-      ` window["${scope}"]["${module}"] = Object.assign(window["${scope}"]["${module}"] || {}, { ${key}: ${key} });`
-    );
+    statement = exportRegex.exec(code);
   }
 
-  return code;
+  return undefined;
+};
+
+const exportedNameOf = (names: string, key: string) => {
+  const aliasMatch = names.match(new RegExp(String.raw`(\w+)\s+as\s+${key}\b`));
+
+  if (aliasMatch) {
+    return aliasMatch[1].replace(/\s+/g, "");
+  }
+
+  const exported = names
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name);
+
+  return exported.includes(key) ? key : undefined;
 };
 
 export { importFromContainer, importToContainer };
